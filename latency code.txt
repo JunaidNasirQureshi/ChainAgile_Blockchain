@@ -1,0 +1,77 @@
+import hashlib
+import time
+import random
+import matplotlib.pyplot as plt
+
+class Block:
+    def __init__(self, index, previous_hash, timestamp, data, hash):
+        self.index = index
+        self.previous_hash = previous_hash
+        self.timestamp = timestamp
+        self.data = data
+        self.transactions = []  # List to store transactions
+        self.hash = hash
+
+def calculate_hash(index, previous_hash, timestamp, data):
+    value = str(index) + str(previous_hash) + str(timestamp) + str(data)
+    return hashlib.sha256(value.encode()).hexdigest()
+
+def create_genesis_block():
+    return Block(0, "0", int(time.time()), "Genesis Block", calculate_hash(0, "0", int(time.time()), "Genesis Block"))
+
+def create_new_block(previous_block, data):
+    index = previous_block.index + 1
+    timestamp = int(time.time())
+    
+    # Introduce a random delay (simulating latency)
+    random_delay = random.uniform(0.1, 1.0)  # Random delay between 0.1 and 1.0 seconds
+    time.sleep(random_delay)
+    
+    hash = calculate_hash(index, previous_block.hash, timestamp, data)
+    return Block(index, previous_block.hash, timestamp, data, hash)
+
+def add_transaction(block, sender, recipient, amount):
+    transaction = {
+        'sender': sender,
+        'recipient': recipient,
+        'amount': amount
+    }
+    block.transactions.append(transaction)
+
+# Create the blockchain and add the genesis block
+blockchain = [create_genesis_block()]
+previous_block = blockchain[0]
+
+# Add 700 blocks to the blockchain with transactions
+num_blocks_to_add = 700
+latencies = []
+
+for i in range(num_blocks_to_add):
+    new_data = f"Block #{i + 1}"
+    
+    start_time = time.time()
+    new_block = create_new_block(previous_block, new_data)
+    end_time = time.time()
+    
+    latency = end_time - start_time
+    latencies.append(latency)
+    
+    add_transaction(new_block, "Alice", "Bob", 10)
+    add_transaction(new_block, "Bob", "Charlie", 5)
+    
+    blockchain.append(new_block)
+    previous_block = new_block
+    print(f"Block #{new_block.index} has been added to the blockchain!")
+    print(f"Latency: {latency:.4f} seconds")
+    print()
+
+# Generate a graph to visualize the latency
+block_indices = list(range(1, num_blocks_to_add + 1))
+
+plt.figure(figsize=(10, 6))
+plt.plot(block_indices, latencies, marker='x', linestyle='-', color='b')
+plt.title('Latency for Adding 700 Blocks')
+plt.xlabel('Block Index')
+plt.ylabel('Latency (s)')
+plt.grid(True)
+plt.show()
